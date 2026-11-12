@@ -1,0 +1,8 @@
+database/secret.key
+database/scans.enc
+database/targets.json
+*.pyc
+__pycache__/
+.env
+.vercel
+.env*
