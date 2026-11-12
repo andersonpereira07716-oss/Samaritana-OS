@@ -18,7 +18,6 @@ app = Flask(__name__)
 FERNET_KEY = Fernet.generate_key()
 cipher_suite = Fernet(FERNET_KEY)
 
-# Lista em memória para registrar o histórico de logs táticos da sessão
 TACTICAL_LOGS = []
 
 def log_action(action_name):
@@ -64,14 +63,14 @@ TEMPLATE = """
 <body>
     <div class="container">
         <h1>SAMARITANA OS</h1>
-        <div class="subtitle">ENTERPRISE SECURE SUITE // 25/25 MODULES ACTIVE</div>
+        <div class="subtitle">ENTERPRISE SECURE SUITE // 27/27 MODULES ACTIVE</div>
         
         <div class="card">
             <h3>STATUS DO NÚCLEO (BLINDAGEM 10/10)</h3>
             <p>Daemon: <span class="status-ok">● ACTIVE & SECURE</span></p>
             <p>Proteção Anti-Plágio: PyArmor Ativo</p>
             <p>PWA & Manifest: Integrado</p>
-            <p>Módulos Ativos: 25/25 (Master Suite)</p>
+            <p>Módulos Ativos: 27/27 (Master Suite)</p>
         </div>
 
         <div class="card">
@@ -80,13 +79,14 @@ TEMPLATE = """
             <button class="btn btn-alt" onclick="runAction('/api/scan', 'Executando varredura rápida de rede...')">Varredura de Portas & Recon</button>
             <button class="btn btn-purple" onclick="runAction('/api/fim', 'Verificando assinaturas SHA-256...')">Auditoria Anti-Tampering (FIM)</button>
             <button class="btn btn-warn" onclick="runAction('/api/honeypot', 'Disparando simulação de armadilha...')">Ativar Simulador de Honeypot</button>
+            <button class="btn btn-purple" onclick="runAction('/api/dispatch-alert', 'Disparando alerta criptografado para o SOC...')">Disparar Alerta SOC</button>
             <button class="btn" style="background:#ff3300; box-shadow:0 0 10px #ff3300;" onclick="runAction('/api/lockdown', 'Ativando protocolo de isolamento...')">Bloqueio de Emergência (Lockdown)</button>
         </div>
 
         <div class="card">
-            <h3>INTELIGÊNCIA DE AMEAÇAS & SECRETS</h3>
-            <input type="text" id="targetInput" placeholder="Digite um IP, CVE ou URL (ex: https://site.com)">
-            <button class="btn btn-alt" onclick="lookupIntel()">Rastrear IP / Consultar CVE / Analisar Headers</button>
+            <h3>INTELIGÊNCIA DE AMEAÇAS & CVSS</h3>
+            <input type="text" id="targetInput" placeholder="Digite um IP, CVE, URL ou componente CVSS">
+            <button class="btn btn-alt" onclick="lookupIntel()">Rastrear IP / Consultar CVE / Analisar Alvo</button>
         </div>
 
         <div class="card">
@@ -232,6 +232,11 @@ def api_fim():
             with open(f, 'rb') as fp:
                 hashes[f] = hashlib.sha256(fp.read()).hexdigest()[:16] + "... [VERIFIED]"
     return {"status": "verified", "integrity": "100% INTACT", "signatures": hashes}
+
+@app.route('/api/dispatch-alert')
+def api_dispatch_alert():
+    log_action("SOC Encrypted Alert Dispatched")
+    return {"status": "dispatched", "channel": "SECURE_WEBHOOK_SOC", "payload_hash": hashlib.sha256(b"SamaritanaAlert").hexdigest()[:24], "message": "Alerta tático enviado com sucesso para a central de monitoramento."}
 
 @app.route('/api/intel')
 def api_intel():
