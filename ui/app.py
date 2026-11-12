@@ -31,7 +31,7 @@ def set_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com;"
+    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://raw.githubusercontent.com;"
     return response
 
 TEMPLATE = """
@@ -85,7 +85,7 @@ TEMPLATE = """
 
         <div class="card">
             <h3>INTELIGÊNCIA DE AMEAÇAS & CVSS</h3>
-            <input type="text" id="targetInput" placeholder="Digite um IP, CVE, URL ou componente CVSS">
+            <input type="text" id="targetInput" placeholder="Digite um IP, CVE, URL ou componente">
             <button class="btn btn-alt" onclick="lookupIntel()">Rastrear IP / Consultar CVE / Analisar Alvo</button>
         </div>
 
@@ -194,7 +194,8 @@ def manifest():
             {
                 "src": "https://raw.githubusercontent.com/andersonpereira07716-oss/Samaritana-OS/main/icon.png",
                 "sizes": "192x192",
-                "type": "image/png"
+                "type": "image/png",
+                "purpose": "any maskable"
             }
         ]
     })
