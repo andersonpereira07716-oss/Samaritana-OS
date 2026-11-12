@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, jsonify, request, send_file, make_response
+from flask import Flask, render_template_string, jsonify, request, send_file
 import sys
 import os
 import socket
@@ -8,6 +8,7 @@ import json
 import random
 import string
 from cryptography.fernet import Fernet
+from datetime import datetime
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from modules.reporter import generate_audit_report
@@ -17,13 +18,21 @@ app = Flask(__name__)
 FERNET_KEY = Fernet.generate_key()
 cipher_suite = Fernet(FERNET_KEY)
 
+# Lista em memória para registrar o histórico de logs táticos da sessão
+TACTICAL_LOGS = []
+
+def log_action(action_name):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    entry = f"[{timestamp}] TACTICAL_EVENT: {action_name}"
+    TACTICAL_LOGS.append(entry)
+
 @app.after_request
 def set_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://raw.githubusercontent.com;"
+    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com;"
     return response
 
 TEMPLATE = """
@@ -55,14 +64,14 @@ TEMPLATE = """
 <body>
     <div class="container">
         <h1>SAMARITANA OS</h1>
-        <div class="subtitle">ENTERPRISE SECURE SUITE // 100% OPERATIONAL</div>
+        <div class="subtitle">ENTERPRISE SECURE SUITE // 25/25 MODULES ACTIVE</div>
         
         <div class="card">
             <h3>STATUS DO NÚCLEO (BLINDAGEM 10/10)</h3>
             <p>Daemon: <span class="status-ok">● ACTIVE & SECURE</span></p>
             <p>Proteção Anti-Plágio: PyArmor Ativo</p>
             <p>PWA & Manifest: Integrado</p>
-            <p>Módulos Ativos: 22/22 (Master Suite)</p>
+            <p>Módulos Ativos: 25/25 (Master Suite)</p>
         </div>
 
         <div class="card">
@@ -75,9 +84,9 @@ TEMPLATE = """
         </div>
 
         <div class="card">
-            <h3>INTELIGÊNCIA DE AMEAÇAS (OSINT & CVE)</h3>
-            <input type="text" id="targetInput" placeholder="Digite um IP (ex: 8.8.8.8) ou CVE (ex: CVE-2024-3094)">
-            <button class="btn btn-alt" onclick="lookupIntel()">Rastrear IP / Consultar CVE</button>
+            <h3>INTELIGÊNCIA DE AMEAÇAS & SECRETS</h3>
+            <input type="text" id="targetInput" placeholder="Digite um IP, CVE ou URL (ex: https://site.com)">
+            <button class="btn btn-alt" onclick="lookupIntel()">Rastrear IP / Consultar CVE / Analisar Headers</button>
         </div>
 
         <div class="card">
@@ -113,8 +122,8 @@ TEMPLATE = """
 
         function lookupIntel() {
             let query = document.getElementById('targetInput').value.trim();
-            if(!query) { alert("Digite um IP ou código CVE."); return; }
-            document.getElementById('result').innerText = "[*] Consultando inteligência para: " + query + "...";
+            if(!query) { alert("Digite um alvo válido."); return; }
+            document.getElementById('result').innerText = "[*] Executando varredura tática para: " + query + "...";
             fetch('/api/intel?q=' + encodeURIComponent(query))
                 .then(res => res.json())
                 .then(data => {
@@ -169,6 +178,7 @@ TEMPLATE = """
 
 @app.route('/')
 def index():
+    log_action("Access Command Center Dashboard")
     return render_template_string(TEMPLATE)
 
 @app.route('/manifest.json')
@@ -191,11 +201,13 @@ def manifest():
 
 @app.route('/api/audit')
 def api_audit():
+    log_action("Generate Executive Report")
     generate_audit_report()
     return {"status": "success", "message": "Laudo executivo gerado na pasta reports/."}
 
 @app.route('/api/scan')
 def api_scan():
+    log_action("Port Scan & Network Recon")
     ports = [21, 22, 80, 443, 5000, 8080]
     active_ports = []
     for p in ports:
@@ -212,6 +224,7 @@ def api_scan():
 
 @app.route('/api/fim')
 def api_fim():
+    log_action("File Integrity Monitoring (FIM)")
     files_to_check = ['ui/app.py', 'modules/reporter.py', 'vercel.json']
     hashes = {}
     for f in files_to_check:
@@ -223,6 +236,7 @@ def api_fim():
 @app.route('/api/intel')
 def api_intel():
     q = request.args.get('q', '').upper()
+    log_action(f"Threat Intel Query: {q}")
     if q.startswith('CVE-'):
         return {
             "type": "CVE_ADVISORY",
@@ -231,6 +245,22 @@ def api_intel():
             "vector": "NETWORK / REMOTE",
             "mitigation": "Apply vendor patch and isolate service port immediately."
         }
+    elif q.startswith('HTTP://') or q.startswith('HTTPS://'):
+        try:
+            req = urllib.request.urlopen(q, timeout=4)
+            headers = dict(req.headers)
+            return {
+                "type": "HTTP_SECURITY_HEADERS",
+                "target": q,
+                "status_code": req.code,
+                "security_headers": {
+                    "X-Frame-Options": headers.get("X-Frame-Options", "MISSING"),
+                    "X-Content-Type-Options": headers.get("X-Content-Type-Options", "MISSING"),
+                    "Content-Security-Policy": headers.get("Content-Security-Policy", "MISSING")
+                }
+            }
+        except Exception as e:
+            return {"type": "HTTP_SECURITY_HEADERS", "target": q, "error": "Falha ao conectar na URL informada."}
     else:
         try:
             url = f"http://ip-api.com/json/{q}?fields=status,country,regionName,city,isp,org,as,query"
@@ -242,14 +272,17 @@ def api_intel():
 
 @app.route('/api/honeypot')
 def api_honeypot():
+    log_action("Honeypot Trap Triggered")
     return {"status": "alert", "trap": "Honeypot active", "intruder_ip": "192.168.1.105", "action": "Logged and sandboxed."}
 
 @app.route('/api/lockdown')
 def api_lockdown():
+    log_action("Emergency Lockdown Enforced")
     return {"status": "secured", "action": "All non-essential sockets quarantined. Lockdown enforced."}
 
 @app.route('/api/encrypt', methods=['POST'])
 def api_encrypt():
+    log_action("Fernet Encryption Executed")
     data = request.get_json()
     raw_text = data.get('text', '')
     token = cipher_suite.encrypt(raw_text.encode())
@@ -257,6 +290,7 @@ def api_encrypt():
 
 @app.route('/api/decrypt', methods=['POST'])
 def api_decrypt():
+    log_action("Fernet Decryption Executed")
     data = request.get_json()
     token = data.get('token', '').encode()
     try:
@@ -267,6 +301,7 @@ def api_decrypt():
 
 @app.route('/api/hashgen', methods=['POST'])
 def api_hashgen():
+    log_action("Hash & Secure Password Generation")
     data = request.get_json()
     text = data.get('text', 'SamaritanaOS2026')
     md5_val = hashlib.md5(text.encode()).hexdigest()
