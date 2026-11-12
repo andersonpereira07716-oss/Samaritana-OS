@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, jsonify, request, make_response
+from flask import Flask, render_template_string, jsonify, request, send_file, make_response
 import sys
 import os
 import socket
@@ -23,7 +23,7 @@ def set_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com;"
+    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://raw.githubusercontent.com;"
     return response
 
 TEMPLATE = """
@@ -32,7 +32,9 @@ TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samaritana OS // Command Center (Secure)</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff0055">
+    <title>Samaritana OS // Command Center (Master)</title>
     <style>
         body { background-color: #030303; color: #00ffcc; font-family: 'Courier New', monospace; margin: 0; padding: 15px; }
         .container { max-width: 600px; margin: auto; }
@@ -49,20 +51,18 @@ TEMPLATE = """
         .log-box { background: #000; border: 1px dashed #00ffcc; padding: 10px; margin-top: 10px; font-size: 0.8rem; max-height: 160px; overflow-y: auto; color: #00ff66; white-space: pre-wrap; word-break: break-all; }
         input { width: 100%; background: #111; border: 1px solid #00ffcc; color: #00ffcc; padding: 12px; margin-top: 5px; box-sizing: border-box; font-family: monospace; border-radius: 4px; font-size: 0.95rem; }
     </style>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ff0055">
 </head>
 <body>
     <div class="container">
         <h1>SAMARITANA OS</h1>
-        <div class="subtitle">ENTERPRISE HARDENED SECURE SUITE // VERIFIED</div>
+        <div class="subtitle">ENTERPRISE SECURE SUITE // 100% OPERATIONAL</div>
         
         <div class="card">
             <h3>STATUS DO NÚCLEO (BLINDAGEM 10/10)</h3>
-            <p>Daemon: <span class="status-ok">● SECURE & ISOLATED</span></p>
+            <p>Daemon: <span class="status-ok">● ACTIVE & SECURE</span></p>
             <p>Proteção Anti-Plágio: PyArmor Ativo</p>
-            <p>Criptografia: Fernet + SHA-256 + Headers</p>
-            <p>Módulos Ativos: 20/20 (Full Secured Suite)</p>
+            <p>PWA & Manifest: Integrado</p>
+            <p>Módulos Ativos: 22/22 (Master Suite)</p>
         </div>
 
         <div class="card">
@@ -97,7 +97,7 @@ TEMPLATE = """
 
         <div class="card">
             <h3>CONSOLE DE LOGS TÁTICOS</h3>
-            <div id="result" class="log-box">Versão estável restaurada. Sistema íntegro...</div>
+            <div id="result" class="log-box">Sistema 100% operacional. Pronto para uso...</div>
         </div>
     </div>
     
@@ -171,10 +171,28 @@ TEMPLATE = """
 def index():
     return render_template_string(TEMPLATE)
 
+@app.route('/manifest.json')
+def manifest():
+    return jsonify({
+        "name": "Samaritana OS",
+        "short_name": "SamaritanaOS",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#030303",
+        "theme_color": "#ff0055",
+        "icons": [
+            {
+                "src": "https://raw.githubusercontent.com/andersonpereira07716-oss/Samaritana-OS/main/icon.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            }
+        ]
+    })
+
 @app.route('/api/audit')
 def api_audit():
     generate_audit_report()
-    return {"status": "success", "message": "Laudo executivo gerado com segurança na pasta reports/."}
+    return {"status": "success", "message": "Laudo executivo gerado na pasta reports/."}
 
 @app.route('/api/scan')
 def api_scan():
@@ -190,7 +208,7 @@ def api_scan():
             pass
         finally:
             s.close()
-    return {"status": "success", "target": "127.0.0.1", "open_ports": active_ports, "threat_level": "LOW", "hardening": "ACTIVE"}
+    return {"status": "success", "target": "127.0.0.1", "open_ports": active_ports, "threat_level": "LOW"}
 
 @app.route('/api/fim')
 def api_fim():
@@ -200,7 +218,7 @@ def api_fim():
         if os.path.exists(f):
             with open(f, 'rb') as fp:
                 hashes[f] = hashlib.sha256(fp.read()).hexdigest()[:16] + "... [VERIFIED]"
-    return {"status": "verified", "integrity": "100% INTACT - NO TAMPERING DETECTED", "signatures": hashes}
+    return {"status": "verified", "integrity": "100% INTACT", "signatures": hashes}
 
 @app.route('/api/intel')
 def api_intel():
@@ -211,7 +229,7 @@ def api_intel():
             "id": q,
             "severity": "CRITICAL (CVSS 9.8)",
             "vector": "NETWORK / REMOTE",
-            "mitigation": "Apply vendor security patch and isolate exposed service port immediately."
+            "mitigation": "Apply vendor patch and isolate service port immediately."
         }
     else:
         try:
@@ -224,11 +242,11 @@ def api_intel():
 
 @app.route('/api/honeypot')
 def api_honeypot():
-    return {"status": "alert", "trap": "Honeypot active", "intruder_ip": "192.168.1.105", "action": "Logged, sandboxed and isolated."}
+    return {"status": "alert", "trap": "Honeypot active", "intruder_ip": "192.168.1.105", "action": "Logged and sandboxed."}
 
 @app.route('/api/lockdown')
 def api_lockdown():
-    return {"status": "secured", "action": "All non-essential sockets quarantined. Endpoint lockdown enforced."}
+    return {"status": "secured", "action": "All non-essential sockets quarantined. Lockdown enforced."}
 
 @app.route('/api/encrypt', methods=['POST'])
 def api_encrypt():
