@@ -49,6 +49,8 @@ TEMPLATE = """
         .log-box { background: #000; border: 1px dashed #00ffcc; padding: 10px; margin-top: 10px; font-size: 0.8rem; max-height: 160px; overflow-y: auto; color: #00ff66; white-space: pre-wrap; word-break: break-all; }
         input { width: 100%; background: #111; border: 1px solid #00ffcc; color: #00ffcc; padding: 12px; margin-top: 5px; box-sizing: border-box; font-family: monospace; border-radius: 4px; font-size: 0.95rem; }
     </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff0055">
 </head>
 <body>
     <div class="container">

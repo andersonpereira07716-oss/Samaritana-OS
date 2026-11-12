@@ -1,0 +1,15 @@
+{
+  "name": "Samaritana OS",
+  "short_name": "SamaritanaOS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#ff0055",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/andersonpereira07716-oss/Samaritana-OS/main/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
