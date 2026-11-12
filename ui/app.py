@@ -5,6 +5,8 @@ import socket
 import hashlib
 import urllib.request
 import json
+import random
+import string
 from cryptography.fernet import Fernet
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -48,7 +50,7 @@ TEMPLATE = """
             <h3>STATUS DO NÚCLEO</h3>
             <p>Daemon: <span class="status-ok">● ONLINE (PROTECTED)</span></p>
             <p>Blindagem: PyArmor + Fernet + SHA-256</p>
-            <p>Módulos Ativos: 16/16 (Full Suite)</p>
+            <p>Módulos Ativos: 18/18 (Full Suite)</p>
         </div>
 
         <div class="card">
@@ -68,9 +70,17 @@ TEMPLATE = """
 
         <div class="card">
             <h3>COFRE DE DADOS (FERNET)</h3>
-            <input type="text" id="secretText" placeholder="Digite uma credencial ou nota...">
+            <input type="text" id="secretText" placeholder="Digite uma credencial ou texto...">
             <button class="btn btn-purple" onclick="encryptData()">Criptografar Dado</button>
-            <div id="vaultResult" class="log-box">Aguardando entrada no cofre...</div>
+            <input type="text" id="cipherText" placeholder="Cole o token cifrado para reverter..." style="margin-top:10px;">
+            <button class="btn btn-alt" onclick="decryptData()">Descriptografar Dado</button>
+            <div id="vaultResult" class="log-box">Aguardando operações no cofre...</div>
+        </div>
+
+        <div class="card">
+            <h3>GERADOR DE CRIPTOGRAFIA & SENHAS</h3>
+            <input type="text" id="plainGen" placeholder="Texto para gerar Hash (MD5/SHA256)...">
+            <button class="btn btn-purple" onclick="generateHash()">Gerar Hashes & Senha Segura</button>
         </div>
 
         <div class="card">
@@ -100,9 +110,6 @@ TEMPLATE = """
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('result').innerText = "[INTEL] " + JSON.stringify(data, null, 2);
-                })
-                .catch(err => {
-                    document.getElementById('result').innerText = "[!] Falha na consulta OSINT.";
                 });
         }
 
@@ -117,6 +124,33 @@ TEMPLATE = """
             .then(res => res.json())
             .then(data => {
                 document.getElementById('vaultResult').innerText = "Cipher: " + data.encrypted;
+            });
+        }
+
+        function decryptData() {
+            let token = document.getElementById('cipherText').value;
+            if(!token) { alert("Cole o token cifrado."); return; }
+            fetch('/api/decrypt', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({token: token})
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('vaultResult').innerText = "Decrypted: " + (data.decrypted || data.error);
+            });
+        }
+
+        function generateHash() {
+            let val = document.getElementById('plainGen').value;
+            fetch('/api/hashgen', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: val})
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('result').innerText = "[HASH & PASS] " + JSON.stringify(data, null, 2);
             });
         }
     </script>
@@ -193,6 +227,32 @@ def api_encrypt():
     raw_text = data.get('text', '')
     token = cipher_suite.encrypt(raw_text.encode())
     return {"status": "success", "encrypted": token.decode()}
+
+@app.route('/api/decrypt', methods=['POST'])
+def api_decrypt():
+    data = request.get_json()
+    token = data.get('token', '').encode()
+    try:
+        decrypted_text = cipher_suite.decrypt(token).decode()
+        return {"status": "success", "decrypted": decrypted_text}
+    except Exception as e:
+        return {"status": "error", "error": "Token inválido ou chave incorreta."}
+
+@app.route('/api/hashgen', methods=['POST'])
+def api_hashgen():
+    data = request.get_json()
+    text = data.get('text', 'SamaritanaOS2026')
+    md5_val = hashlib.md5(text.encode()).hexdigest()
+    sha256_val = hashlib.sha256(text.encode()).hexdigest()
+    chars = string.ascii_letters + string.digits + "!@#$%"
+    secure_pass = "".join(random.choice(chars) for _ in range(16))
+    return {
+        "status": "success",
+        "input": text,
+        "md5": md5_val,
+        "sha256": sha256_val,
+        "generated_secure_password": secure_pass
+    }
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
