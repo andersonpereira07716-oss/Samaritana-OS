@@ -1,0 +1,53 @@
+/* --- ESTILOS TÁTICOS CYBERPUNK & HUD --- */
+@keyframes neon-pulse {
+  0% { box-shadow: 0 0 5px rgba(0, 255, 128, 0.2), inset 0 0 5px rgba(0, 255, 128, 0.1); }
+  50% { box-shadow: 0 0 15px rgba(0, 255, 128, 0.5), inset 0 0 10px rgba(0, 255, 128, 0.3); }
+  100% { box-shadow: 0 0 5px rgba(0, 255, 128, 0.2), inset 0 0 5px rgba(0, 255, 128, 0.1); }
+}
+
+.tactic-card {
+  border: 1px solid rgba(0, 255, 128, 0.3);
+  background: rgba(10, 15, 13, 0.85);
+  animation: neon-pulse 4s infinite;
+  transition: all 0.3s ease;
+}
+
+.tactic-card:hover {
+  border-color: rgba(0, 255, 128, 0.8);
+  transform: translateY(-2px);
+}
+
+button, .btn-tactic {
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  cursor: pointer;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+.btn-executive {
+  background: linear-gradient(135deg, #4a0e4e, #240626);
+  border: 1px solid #bd00ff;
+  color: #ffb3ff;
+  box-shadow: 0 0 10px rgba(189, 0, 255, 0.3);
+}
+
+.btn-executive:hover {
+  box-shadow: 0 0 20px rgba(189, 0, 255, 0.6);
+}
+
+.btn-recon {
+  background: linear-gradient(135deg, #0b3d2c, #031a12);
+  border: 1px solid #00ff80;
+  color: #80ffbf;
+  box-shadow: 0 0 10px rgba(0, 255, 128, 0.3);
+}
+
+.btn-recon:hover {
+  box-shadow: 0 0 20px rgba(0, 255, 128, 0.6);
+}
